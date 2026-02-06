@@ -47,7 +47,7 @@ async def main():
                 else:
                     await user_service.create_user(
                         telegram_id=settings.SUPER_ADMIN_ID,
-                        phone=None,
+                        phone=str(settings.SUPER_ADMIN_ID),
                         full_name="Super Admin",
                         role=settings.ROLE_ADMIN
                     )
