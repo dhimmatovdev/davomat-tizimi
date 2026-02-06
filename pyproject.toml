@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "davomat-bot"
+version = "0.1.0"
+description = "Maktab davomatini yurituvchi professional Telegram bot"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiogram = "^3.4.1"
+sqlalchemy = "^2.0.25"
+alembic = "^1.13.1"
+python-dotenv = "^1.0.0"
+aiosqlite = "^0.19.0"
+openpyxl = "^3.1.2"
+reportlab = "^4.0.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+pytest-asyncio = "^0.23.3"
+black = "^23.12.1"
+mypy = "^1.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
