@@ -61,3 +61,8 @@ class UserService:
     async def get_user_by_telegram_id(self, telegram_id: int) -> Optional[User]:
         """Telegram ID bo'yicha foydalanuvchini topish."""
         return await self.repo.get_by_telegram_id(telegram_id)
+    
+    async def get_user_by_phone(self, phone: str) -> Optional[User]:
+        """Telefon raqam bo'yicha foydalanuvchini topish."""
+        normalized_phone = normalize_phone(phone)
+        return await self.repo.get_by_phone(normalized_phone)

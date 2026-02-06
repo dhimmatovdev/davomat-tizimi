@@ -1,7 +1,12 @@
 """Birinchi admin foydalanuvchini qo'shish uchun script."""
 import asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
-from core.db import get_session
+import sys
+from pathlib import Path
+
+# Parent directory'ni sys.path ga qo'shish
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from core.db import get_session, init_db
 from repositories.user import UserRepository
 from utils.phone import normalize_phone
 
@@ -11,6 +16,11 @@ async def create_admin():
     print("=" * 50)
     print("BIRINCHI ADMIN YARATISH")
     print("=" * 50)
+    
+    # Database'ni initsializatsiya qilish
+    print("\nDatabase'ni tayyorlamoqda...")
+    await init_db()
+    print("✅ Database tayyor!\n")
     
     # Ma'lumotlarni so'rash
     telegram_id = input("Telegram ID: ").strip()
