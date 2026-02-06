@@ -35,7 +35,7 @@ class UserRepository:
     async def create(
         self,
         telegram_id: int,
-        phone: str,
+        phone: Optional[str],
         full_name: str,
         role: str,
     ) -> User:

@@ -13,6 +13,8 @@ class Settings:
     
     # Bot
     BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
+    SUPER_ADMIN_ID: int = int(os.getenv("SUPER_ADMIN_ID", "0"))
+
     
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./davomat.db")

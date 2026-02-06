@@ -45,12 +45,12 @@ class UserService:
     async def create_user(
         self,
         telegram_id: int,
-        phone: str,
+        phone: Optional[str],
         full_name: str,
         role: str,
     ) -> User:
         """Yangi foydalanuvchi yaratish (faqat admin)."""
-        normalized_phone = normalize_phone(phone)
+        normalized_phone = normalize_phone(phone) if phone else None
         return await self.repo.create(
             telegram_id=telegram_id,
             phone=normalized_phone,
