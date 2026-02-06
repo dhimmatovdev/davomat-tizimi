@@ -237,7 +237,7 @@ MIT License
 
 **Dhimmatov Dev**
 - GitHub: [@dhimmatovdev](https://github.com/dhimmatovdev)
-- Telegram: [@dhimmatovdev](https://t.me/dhimmatovdev)
+- Telegram: [@dhimmatovdev](https://t.me/dilshodhimmatov)
 
 ## 🙏 Minnatdorchilik
 
