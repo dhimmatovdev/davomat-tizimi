@@ -25,7 +25,6 @@ class Settings:
     # Rollar
     ROLE_ADMIN = "admin"
     ROLE_STAFF = "xodim"
-    
     # Davomat statuslari
     STATUS_PRESENT = 1
     STATUS_LATE = 2

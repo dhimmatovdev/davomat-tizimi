@@ -778,3 +778,182 @@ async def cancel_action(callback: CallbackQuery, state: FSMContext):
                 "Admin panel",
                 reply_markup=get_admin_menu_keyboard(),
             )
+
+
+# ============= ADMINLAR BOSHQARUVI =============
+
+@router.callback_query(F.data == "a:menu:admins")
+async def admin_admins_menu(callback: CallbackQuery):
+    """Admin - Adminlar menyusi."""
+    async for session in get_session():
+        user_service = UserService(session)
+        user = await user_service.get_user_by_telegram_id(callback.from_user.id)
+        
+        has_access, error_msg = await check_admin_access(user)
+        if not has_access:
+            await callback.answer(error_msg, show_alert=True)
+            return
+        
+        # Barcha adminlarni olish
+        user_repo = user_service.repo
+        all_admins = await user_repo.get_all_admins()
+        
+        if not all_admins:
+            text = "👨‍💼 Adminlar\n\nHozircha adminlar yo'q."
+        else:
+            text = f"👨‍💼 Adminlar ({len(all_admins)} ta)\n\n"
+            for admin in all_admins:
+                text += f"👤 {admin.full_name}\n"
+                text += f"   📱 {admin.phone}\n\n"
+        
+        from bot.keyboards.inline import InlineKeyboardBuilder, InlineKeyboardButton
+        builder = InlineKeyboardBuilder()
+        
+        builder.row(
+            InlineKeyboardButton(text="➕ Yangi admin", callback_data="a:admins:add")
+        )
+        builder.row(
+            InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")
+        )
+        
+        await callback.message.edit_text(
+            text,
+            reply_markup=builder.as_markup(),
+        )
+        await callback.answer()
+
+
+@router.callback_query(F.data == "a:admins:add")
+async def admin_add_admin_start(callback: CallbackQuery, state: FSMContext):
+    """Yangi admin qo'shish - boshlash."""
+    async for session in get_session():
+        user_service = UserService(session)
+        user = await user_service.get_user_by_telegram_id(callback.from_user.id)
+        
+        has_access, error_msg = await check_admin_access(user)
+        if not has_access:
+            await callback.answer(error_msg, show_alert=True)
+            return
+        
+        await state.set_state(AdminStates.waiting_admin_phone)
+        await callback.message.edit_text(
+            "📝 Yangi admin qo'shish\n\n"
+            "Adminning telefon raqamini kiriting\n"
+            "(masalan: +998901234567 yoki 998901234567):",
+            reply_markup=get_cancel_keyboard(),
+        )
+        await callback.answer()
+
+
+@router.message(AdminStates.waiting_admin_phone)
+async def admin_add_admin_phone(message: Message, state: FSMContext):
+    """Yangi admin - telefon raqam."""
+    from utils.phone import normalize_phone
+    
+    phone = normalize_phone(message.text)
+    
+    if not phone:
+        await message.answer("❌ Noto'g'ri telefon raqam. Qaytadan kiriting:")
+        return
+    
+    async for session in get_session():
+        user_service = UserService(session)
+        user = await user_service.get_user_by_telegram_id(message.from_user.id)
+        
+        has_access, error_msg = await check_admin_access(user)
+        if not has_access:
+            await message.answer(error_msg)
+            await state.clear()
+            return
+        
+        # Telefon raqam allaqachon mavjudligini tekshirish
+        existing_user = await user_service.get_user_by_phone(phone)
+        if existing_user:
+            # Agar mavjud bo'lsa, rolini yangilash mumkin
+            if existing_user.role == "admin":
+                await message.answer(
+                    f"❌ Bu foydalanuvchi allaqachon admin.\n"
+                    f"Foydalanuvchi: {existing_user.full_name}"
+                )
+                return
+            else:
+                # Mavjud user rolini admin qilish
+                existing_user.role = "admin"
+                await session.commit()
+                await message.answer(
+                    f"✅ {existing_user.full_name} endi admin bo'ldi!",
+                )
+                await state.clear()
+                # Admins menu ga qaytishni taklif qilish? Yoki avto qaytish?
+                # Hozircha shu yerda to'xtaymiz, user menu dan ko'rsa bo'ladi.
+                return
+        
+        # Telefon raqamni saqlash va ismni so'rash
+        await state.update_data(phone=phone)
+        await state.set_state(AdminStates.waiting_admin_name)
+        
+        await message.answer(
+            f"✅ Telefon: {phone}\n\n"
+            f"Adminning to'liq ismini kiriting:"
+        )
+
+
+@router.message(AdminStates.waiting_admin_name)
+async def admin_add_admin_finish(message: Message, state: FSMContext):
+    """Yangi admin - ism va yakunlash."""
+    full_name = message.text.strip()
+    
+    if not full_name:
+        await message.answer("❌ Ism bo'sh bo'lishi mumkin emas. Qaytadan kiriting:")
+        return
+    
+    data = await state.get_data()
+    phone = data.get("phone")
+    
+    if not phone:
+        await message.answer("❌ Xato yuz berdi. Qaytadan urinib ko'ring.")
+        await state.clear()
+        return
+    
+    async for session in get_session():
+        user_service = UserService(session)
+        user = await user_service.get_user_by_telegram_id(message.from_user.id)
+        
+        has_access, error_msg = await check_admin_access(user)
+        if not has_access:
+            await message.answer(error_msg)
+        
+        # Admin yaratish
+        new_admin = await user_service.create_user(
+            telegram_id=0,
+            phone=phone,
+            full_name=full_name,
+            role="admin",
+        )
+        
+        await state.clear()
+        
+        # Barcha adminlarni ko'rsatish
+        user_repo = user_service.repo
+        all_admins = await user_repo.get_all_admins()
+        
+        text = f"✅ '{full_name}' muvaffaqiyatli admin etib tayinlandi!\n\n"
+        text += f"👨‍💼 Adminlar ({len(all_admins)} ta)\n\n"
+        for admin in all_admins:
+            text += f"👤 {admin.full_name}\n"
+            text += f"   📱 {admin.phone}\n\n"
+        
+        from bot.keyboards.inline import InlineKeyboardBuilder, InlineKeyboardButton
+        builder = InlineKeyboardBuilder()
+        
+        builder.row(
+            InlineKeyboardButton(text="➕ Yangi admin", callback_data="a:admins:add")
+        )
+        builder.row(
+            InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_to_menu")
+        )
+        
+        await message.answer(
+            text,
+            reply_markup=builder.as_markup(),
+        )

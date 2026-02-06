@@ -19,6 +19,9 @@ def get_admin_menu_keyboard() -> InlineKeyboardMarkup:
     )
     builder.row(
         InlineKeyboardButton(text="📊 Hisobotlar", callback_data="a:menu:reports"),
+        InlineKeyboardButton(text="👨‍💼 Adminlar", callback_data="a:menu:admins"),
+    )
+    builder.row(
         InlineKeyboardButton(text="⚙️ Sozlamalar", callback_data="a:menu:settings"),
     )
     return builder.as_markup()

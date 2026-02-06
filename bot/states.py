@@ -11,6 +11,10 @@ class AdminStates(StatesGroup):
     # Xodim qo'shish
     waiting_staff_phone = State()
     waiting_staff_name = State()
+    
+    # Admin qo'shish
+    waiting_admin_phone = State()
+    waiting_admin_name = State()
 
 
 class StaffStates(StatesGroup):

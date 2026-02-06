@@ -64,3 +64,10 @@ class UserRepository:
             select(User).where(User.role == "xodim", User.is_active == True)
         )
         return list(result.scalars().all())
+    
+    async def get_all_admins(self) -> list[User]:
+        """Barcha adminlarni olish."""
+        result = await self.session.execute(
+            select(User).where(User.role == "admin", User.is_active == True)
+        )
+        return list(result.scalars().all())
