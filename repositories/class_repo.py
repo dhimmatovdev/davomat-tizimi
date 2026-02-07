@@ -1,6 +1,5 @@
-"""Class repository - sinflar bilan ishlash."""
 from typing import Optional
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from core.db.models import Class, ClassStaff, Student
@@ -105,3 +104,22 @@ class ClassRepository:
             )
         )
         return result.scalar_one_or_none()
+        
+    async def increment_student_count(self, class_id: int) -> None:
+        """Sinf o'quvchilar sonini oshirish."""
+        await self.session.execute(
+            update(Class)
+            .where(Class.id == class_id)
+            .values(total_students=Class.total_students + 1)
+        )
+        await self.session.commit()
+
+    async def decrement_student_count(self, class_id: int) -> None:
+        """Sinf o'quvchilar sonini kamaytirish."""
+        await self.session.execute(
+            update(Class)
+            .where(Class.id == class_id)
+            .values(total_students=Class.total_students - 1)
+        )
+        await self.session.commit()
+

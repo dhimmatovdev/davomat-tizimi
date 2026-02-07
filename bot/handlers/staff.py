@@ -389,6 +389,23 @@ async def staff_attendance_summary(callback: CallbackQuery):
         
         from bot.keyboards.inline import InlineKeyboardBuilder, InlineKeyboardButton
         builder = InlineKeyboardBuilder()
+        
+        # Yakunlash tugmasi (agar yakunlanmagan bo'lsa)
+        if not summary.get('is_finalized', False):
+            builder.row(
+                InlineKeyboardButton(
+                    text="🔒 Davomatni yakunlash",
+                    callback_data=f"s:att:finalize:{attendance_day.id}"
+                )
+            )
+        else:
+            builder.row(
+                InlineKeyboardButton(
+                    text="✅ Davomat yakunlangan",
+                    callback_data="noop"
+                )
+            )
+            
         builder.row(
             InlineKeyboardButton(
                 text="◀️ Orqaga",
@@ -401,6 +418,46 @@ async def staff_attendance_summary(callback: CallbackQuery):
             reply_markup=builder.as_markup(),
         )
         await callback.answer()
+
+
+@router.callback_query(F.data.regexp(r"s:att:finalize:(\d+)$"))
+async def staff_finalize_attendance(callback: CallbackQuery):
+    """Davomatni yakunlash."""
+    attendance_day_id = int(callback.data.split(":")[-1])
+    
+    async for session in get_session():
+        user_service = UserService(session)
+        user = await user_service.get_user_by_telegram_id(callback.from_user.id)
+        
+        has_access, error_msg = await check_staff_access(user)
+        if not has_access:
+            await callback.answer(error_msg, show_alert=True)
+            return
+        
+        attendance_service = AttendanceService(session)
+        
+        # Yakunlashga urinish
+        success, error = await attendance_service.finalize_attendance(attendance_day_id)
+        
+        if not success:
+            await callback.answer(error, show_alert=True)
+            return
+        
+        await callback.answer("✅ Davomat muvaffaqiyatli yakunlandi!", show_alert=True)
+        
+        # Ekranni yangilash
+        day = await attendance_service.attendance_repo.get_attendance_day_by_id(attendance_day_id)
+        if day:
+            # Summary handlerini chaqirish uchun yangi callback yasash
+            from aiogram.types import CallbackQuery as CQ
+            new_callback = CQ(
+                id=callback.id,
+                from_user=callback.from_user,
+                message=callback.message,
+                chat_instance=callback.chat_instance,
+                data=f"s:att:{day.class_id}:summary"
+            )
+            await staff_attendance_summary(new_callback)
 
 
 # ============= O'QUVCHILAR =============

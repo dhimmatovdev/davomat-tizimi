@@ -32,6 +32,10 @@ class StudentService:
         
         # Yaratish
         student = await self.student_repo.create(class_id, full_name)
+        
+        # Total students ni yangilash
+        await self.class_repo.increment_student_count(class_id)
+        
         return student, ""
     
     async def remove_student(self, student_id: int) -> tuple[bool, str]:
@@ -45,8 +49,14 @@ class StudentService:
         student = await self.student_repo.get_by_id(student_id)
         if not student:
             return False, "❌ O'quvchi topilmadi."
+            
+        class_id = student.class_id
         
         await self.student_repo.delete(student)
+        
+        # Total students ni yangilash
+        await self.class_repo.decrement_student_count(class_id)
+        
         return True, ""
     
     async def get_students_by_class(self, class_id: int) -> list[Student]:
@@ -71,13 +81,15 @@ class StudentService:
         if not student:
             return False, "❌ O'quvchi topilmadi."
         
+        from_class_id = student.class_id
+        
         # Maqsad sinfni tekshirish
         to_class = await self.class_repo.get_by_id(to_class_id)
         if not to_class:
             return False, "❌ Maqsad sinf topilmadi."
         
         # Bir xil sinfga o'tkazish tekshiruvi
-        if student.class_id == to_class_id:
+        if from_class_id == to_class_id:
             return False, "❌ O'quvchi allaqachon shu sinfda."
         
         # Transfer yaratish
@@ -86,12 +98,16 @@ class StudentService:
         
         await transfer_repo.create(
             student_id=student_id,
-            from_class_id=student.class_id,
+            from_class_id=from_class_id,
             to_class_id=to_class_id,
             by_user_id=by_user_id,
         )
         
         # O'quvchini o'tkazish
         await self.student_repo.transfer_student(student, to_class_id)
+        
+        # Total students ni yangilash
+        await self.class_repo.decrement_student_count(from_class_id)
+        await self.class_repo.increment_student_count(to_class_id)
         
         return True, ""
