@@ -1,3 +1,6 @@
+"""Attendance repository - davomat bilan ishlash."""
+from typing import Optional
+from datetime import date, datetime
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
