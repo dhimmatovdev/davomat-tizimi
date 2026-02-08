@@ -51,20 +51,6 @@ class Class(Base):
     staff_assignments: Mapped[list["ClassStaff"]] = relationship(
         "ClassStaff", back_populates="class_", cascade="all, delete-orphan"
     )
-
-# ... (Student model omitted)
-
-class AttendanceDay(Base):
-    """Davomat kunlari jadvali."""
-    
-    __tablename__ = "attendance_days"
-    
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    class_id: Mapped[int] = mapped_column(Integer, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
-    date: Mapped[datetime] = mapped_column(Date, nullable=False)
-    marked_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    is_finalized: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     students: Mapped[list["Student"]] = relationship(
         "Student", back_populates="class_", foreign_keys="Student.class_id"
     )
@@ -119,6 +105,7 @@ class AttendanceDay(Base):
     class_id: Mapped[int] = mapped_column(Integer, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
     date: Mapped[datetime] = mapped_column(Date, nullable=False)
     marked_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    is_finalized: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships

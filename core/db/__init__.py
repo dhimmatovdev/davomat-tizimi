@@ -1,5 +1,7 @@
 """Database module."""
-from .engine import engine, get_session, init_db
 from .base import Base
+from .engine import engine, get_session, init_db
 
-__all__ = ["engine", "get_session", "init_db", "Base"]
+__all__ = ["Base", "engine", "get_session", "init_db"]
+
+

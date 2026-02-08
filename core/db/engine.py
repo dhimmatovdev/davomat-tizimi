@@ -32,5 +32,10 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db() -> None:
     """Database jadvallarini yaratish."""
+    # CRITICAL: Modellarni import qilish metadata uchun
+    # Bu import FAQAT shu funksiya ichida bo'ladi, shuning uchun circular import muammosi bo'lmaydi
+    from core.db import models  # noqa: F401 - metadata uchun kerak
+    
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
