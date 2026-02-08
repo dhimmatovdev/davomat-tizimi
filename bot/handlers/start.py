@@ -23,10 +23,47 @@ router = Router()
 async def cmd_start(message: Message, state: FSMContext):
     """
     /start komandasi - foydalanuvchini kutib olish.
+    Agar foydalanuvchi avval ro'yxatdan o'tgan bo'lsa, raqam so'ramasdan to'g'ridan-to'g'ri menyu ko'rsatadi.
     """
     await state.clear()
     
-    # Telefon raqamni so'rash
+    # Avval foydalanuvchini database'dan qidirish
+    async for session in get_session():
+        user_service = UserService(session)
+        user = await user_service.get_user_by_telegram_id(message.from_user.id)
+        
+        # Agar foydalanuvchi mavjud va faol bo'lsa, to'g'ridan-to'g'ri menyu ko'rsatamiz
+        if user and user.is_active:
+            if is_admin(user):
+                from aiogram.types import ReplyKeyboardRemove
+                await message.answer(
+                    f"✅ Xush kelibsiz, {user.full_name}!\n\n"
+                    f"Siz admin sifatida tizimga kirdingiz.",
+                    reply_markup=ReplyKeyboardRemove(),  # Eski keyboardni olib tashlash
+                )
+                await message.answer(
+                    "Admin panel",
+                    reply_markup=get_admin_menu_keyboard(),
+                )
+            elif is_staff(user):
+                from aiogram.types import ReplyKeyboardRemove
+                await message.answer(
+                    f"✅ Xush kelibsiz, {user.full_name}!\n\n"
+                    f"Siz xodim sifatida tizimga kirdingiz.",
+                    reply_markup=ReplyKeyboardRemove(),  # Eski keyboardni olib tashlash
+                )
+                await message.answer(
+                    "Xodim panel",
+                    reply_markup=get_staff_menu_keyboard(),
+                )
+            else:
+                await message.answer(
+                    "❌ Sizning rolingiz noto'g'ri.\n\n"
+                    "Iltimos, administrator bilan bog'laning.",
+                )
+            return  # Telefon raqam so'ramasdan to'xtaydi
+    
+    # Agar foydalanuvchi topilmasa yoki faol bo'lmasa, telefon raqamni so'raymiz
     await message.answer(
         "👋 Assalomu alaykum!\n\n"
         "Maktab davomat tizimiga xush kelibsiz.\n\n"
@@ -74,16 +111,25 @@ async def handle_contact(message: Message):
             return
         
         # Role bo'yicha menu ko'rsatish
+        from aiogram.types import ReplyKeyboardRemove
         if is_admin(user):
             await message.answer(
                 f"✅ Xush kelibsiz, {user.full_name}!\n\n"
                 f"Siz admin sifatida tizimga kirdingiz.",
+                reply_markup=ReplyKeyboardRemove(),  # Eski keyboardni olib tashlash
+            )
+            await message.answer(
+                "Admin panel",
                 reply_markup=get_admin_menu_keyboard(),
             )
         elif is_staff(user):
             await message.answer(
                 f"✅ Xush kelibsiz, {user.full_name}!\n\n"
-                f"Siz xodim sifatida tizimga kirdingiz.",
+                f"Siz xodim sifatida tizimga kirdinguz.",
+                reply_markup=ReplyKeyboardRemove(),  # Eski keyboardni olib tashlash
+            )
+            await message.answer(
+                "Xodim panel",
                 reply_markup=get_staff_menu_keyboard(),
             )
         else:
